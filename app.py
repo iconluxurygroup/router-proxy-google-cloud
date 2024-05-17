@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+DEVICE_ID = "G-CLOUD-0001"
+
 app = FastAPI()
 
 class URLRequest(BaseModel):
@@ -62,7 +64,8 @@ async def fetch_query(request: URLRequest):
     public_ip = await fetch_public_ip()
     return {
         "result": result,
-        "public_ip": public_ip
+        "public_ip": public_ip,
+        "device_id": DEVICE_ID
     }
 
 @app.get("/get-ip")
@@ -76,7 +79,12 @@ async def get_public_ip():
         }
     else:
         raise HTTPException(status_code=500, detail="Failed to fetch public IP")
-
+        
+@app.get("/device-info")
+async def get_device_info():
+    """Endpoint to return the device information including the hardcoded device ID."""
+    return {"device_id": DEVICE_ID, "status": "active"}
+    
 @app.get("/health/google")
 async def health_check_google():
     public_ip = await fetch_public_ip()
