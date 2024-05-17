@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException,Query
 from pydantic import BaseModel
 import httpx
 import os
-import random,urllib
+import random
 from dotenv import load_dotenv
 
 DEVICE_ID = "G-CLOUD-0001"
@@ -13,7 +13,7 @@ load_dotenv()
 app = FastAPI()
 
 class URLRequest(BaseModel):
-    url: HttpUrl
+    url: str
 
 async def fetch_desktop_user_agent(url: str):
     try:
@@ -56,12 +56,12 @@ async def fetch_any_url(url: str):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "up", "device_id": DEVICE_ID }
+    return {"status": "up",
+        "device_id": DEVICE_ID }
 
 @app.post("/fetch")
 async def fetch_query(request: URLRequest):
-    encoded_url = urllib.parse.quote(url, safe='')
-    result = await fetch_any_url(encoded_url)
+    result = await fetch_any_url(request.url)
     public_ip = await fetch_public_ip()
     # Return the result along with the device ID and public IP
     return {
@@ -90,8 +90,11 @@ async def health_check_google():
         async with httpx.AsyncClient() as client:
             response = await client.get("https://www.google.com")
             if response.status_code == 200:
-                return {"status": "Google is reachable", "public_ip": public_ip}
+                return {"status": "Google is reachable", "public_ip": public_ip,
+        "device_id": DEVICE_ID }
             else:
-                return {"status": "Google is reachable but returned a non-OK status", "code": response.status_code, "public_ip": public_ip}
+                return {"status": "Google is reachable but returned a non-OK status", "code": response.status_code, "public_ip": public_ip,
+        "device_id": DEVICE_ID }
     except Exception as e:
-        return {"status": "Failed to reach Google", "error": str(e), "public_ip": public_ip}
+        return {"status": "Failed to reach Google", "error": str(e), "public_ip": public_ip,
+        "device_id": DEVICE_ID }
