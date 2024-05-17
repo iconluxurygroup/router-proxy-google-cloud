@@ -59,7 +59,7 @@ async def health_check():
     return {"status": "up", "device_id": DEVICE_ID }
 
 @app.post("/fetch")
-async def fetch_query(url: str = Query(None, description="URL to fetch")):
+async def fetch_query(request: URLRequest):
     encoded_url = urllib.parse.quote(url, safe='')
     result = await fetch_any_url(encoded_url)
     public_ip = await fetch_public_ip()
