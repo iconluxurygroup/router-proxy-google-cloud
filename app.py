@@ -56,7 +56,7 @@ async def fetch_any_url(url: str):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "up"}
+    return {"status": "up", "device_id": DEVICE_ID }
 
 @app.post("/fetch")
 async def fetch_query(request: URLRequest):
