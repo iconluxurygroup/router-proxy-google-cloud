@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException,Query
 from pydantic import BaseModel
 import httpx
 import os
-import random
+import random,urllib
 from dotenv import load_dotenv
 
 DEVICE_ID = "G-CLOUD-0001"
@@ -59,8 +59,9 @@ async def health_check():
     return {"status": "up", "device_id": DEVICE_ID }
 
 @app.post("/fetch")
-async def fetch_query(request: URLRequest):
-    result = await fetch_any_url(request.url)
+async def fetch_query(url: str = Query(None, description="URL to fetch")):
+    encoded_url = urllib.parse.quote(url, safe='')
+    result = await fetch_any_url(encoded_url)
     public_ip = await fetch_public_ip()
     # Return the result along with the device ID and public IP
     return {
