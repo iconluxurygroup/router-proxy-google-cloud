@@ -13,7 +13,7 @@ load_dotenv()
 app = FastAPI()
 
 class URLRequest(BaseModel):
-    url: str
+    url: HttpUrl
 
 async def fetch_desktop_user_agent(url: str):
     try:
