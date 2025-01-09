@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException,Query
 from pydantic import BaseModel
 import httpx
-import os
-import random
+import os,asyncio
+import random,subprocess,time,uvicorn
 from dotenv import load_dotenv
 
 DEVICE_ID = "G-CLOUD-0001"
@@ -98,3 +98,70 @@ async def health_check_google():
     except Exception as e:
         return {"status": "Failed to reach Google", "error": str(e), "public_ip": public_ip,
         "device_id": DEVICE_ID }
+
+async def run_shell_command_async(command):
+    process = await asyncio.create_subprocess_exec(
+        *command,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await process.communicate()
+    return {
+        "stdout": stdout.decode().strip(),
+        "stderr": stderr.decode().strip(),
+        "returncode": process.returncode
+    }
+
+async def reset_ip_vpn():
+    process = await asyncio.create_subprocess_exec(
+        "expressvpn", "disconnect",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    await process.communicate()
+    await asyncio.sleep(5)
+
+    process = await asyncio.create_subprocess_exec(
+        "expressvpn", "connect", "smart",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    await process.communicate()
+    await asyncio.sleep(5)
+
+
+@app.get("/reset-ip")
+async def reset_ip():
+    try:
+        await reset_ip_vpn()
+        public_ip = await fetch_public_ip()
+        ip_info = await fetch_ip_info(public_ip)
+        return {
+            "public_ip": public_ip,
+            "ip_info": ip_info,
+            "device_id": DEVICE_ID
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reset IP: {e}")
+
+    
+async def get_vpn_status():
+    result = subprocess.run(["expressvpn", "status"], capture_output=True, text=True)
+    if "Not connected" in result.stdout:
+        return "Not Connected"
+    if "Connected to" in result.stdout:
+        return "Connected"
+    return "Unknown"
+
+
+@app.get("/vpn-status")
+async def vpn_status():
+    status = await get_vpn_status()
+    return {
+        "vpn_status": status,
+        "device_id": DEVICE_ID
+    }
+
+
+if __name__ == "__main__":
+    uvicorn.run("app:app", port=8080, log_level="info",host='0.0.0.0')
