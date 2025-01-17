@@ -1,5 +1,6 @@
 fastapi
-httpx
-pydantic
 uvicorn
-python-dotenv
+selenium
+beautifulsoup4
+firebase-admin
+boto3
