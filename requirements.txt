@@ -1,5 +1,2 @@
-fastapi
+functions-framework
 httpx
-pydantic
-uvicorn
-python-dotenv
